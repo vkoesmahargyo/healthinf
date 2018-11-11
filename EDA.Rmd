@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r, echo = FALSE}
+```{r, include=FALSE}
 library(dplyr)
 library(readr)
 library(data.table)
@@ -36,12 +36,7 @@ colnames <- colnames(nsqip)
 ```
 
 
-```{r}
-nsqip
-colnames
-```
-
-```{r, echo=FALSE}
+```{r, include=FALSE}
 #factorize character variables
 for (column in colnames) {
   if (class(nsqip[,(column)]) == "character") {
@@ -103,16 +98,13 @@ nsqip$HEIGHT <- conv_unit(nsqip$HEIGHT, from = "inch", to= "m")
 nsqip$WEIGHT <- conv_unit(nsqip$WEIGHT,from ="lbs", to = "kg")
 
 nsqip <- mutate(nsqip, BMI = WEIGHT/HEIGHT^2)
-nsqip
+summary(nsqip$BMI)
 ```
 
 
 ```{r}
 # find percent within hematocrit thresholds 
 HCT1 <- nsqip %>% filter(PRHCT <= 24 & PRHCT >0)
-```
-
-```{r}
 HCT2 <- nsqip %>% filter(PRHCT <= 27 & PRHCT >24)
 HCT3 <- nsqip %>% filter(PRHCT <= 30 & PRHCT >27)
 HCT4 <- nsqip %>% filter(PRHCT <= 33 & PRHCT >30)
@@ -120,6 +112,7 @@ HCT5 <- nsqip %>% filter(PRHCT <= 36 & PRHCT >33)
 HCT6 <- nsqip %>% filter(PRHCT <= 39 & PRHCT >36)
 HCT7 <- nsqip %>% filter(PRHCT >39)
 ```
+
 
 ```{r}
 # hematocrit stratification, number of patients in each
@@ -141,12 +134,12 @@ target_CREAT <- nsqip %>% filter(PRCREAT >= 0.02 & PRCREAT <= 15)
 target_PLT <- nsqip %>% filter(PRPLATE>= 50 & PRPLATE <= 700)
 target_PTT <- nsqip %>% filter(PRPTT >= 5 & PRPTT <= 25)
 target_INR <-nsqip %>% filter(PRINR >= 0.1 & PRINR <= 10)
+
 dim(target_BUN)
 dim(target_CREAT)
 dim(target_PLT)
 dim(target_PTT)
 dim(target_INR)
-
 
 ```
 
@@ -159,7 +152,7 @@ dim(in_range)
 ```{r}
 # Look at days to MACE within 30 days for all patients
 ALLMACE_30 <- nsqip %>% filter(DOpertoD >0, DCNSCVA >0, DCDMI >0)
-ALLMACE_30
+dim(ALLMACE_30)
 CVA_30 <- nsqip %>% filter(DCNSCVA >0)
 dim(CVA_30)
 DEATH_30<- nsqip %>% filter(DOpertoD >0)
