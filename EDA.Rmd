@@ -1,0 +1,173 @@
+---
+title: "Untitled"
+author: "Vidya Koesmahargyo"
+date: "11/8/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE}
+library(dplyr)
+library(readr)
+library(data.table)
+library(measurements)
+library('scales')
+```
+
+```{r}
+newdata <- fread("NSQIP.csv", sep="auto")
+
+```
+
+```{r}
+nsqip <- newdata
+str(nsqip)
+```
+
+
+```{r}
+#select out cardiac surgery
+nsqip <- filter(nsqip, SURGSPEC != "Cardiac Surgery")
+colnames <- colnames(nsqip)
+
+```
+
+
+```{r}
+nsqip
+colnames
+```
+
+```{r, echo=FALSE}
+#factorize character variables
+for (column in colnames) {
+  if (class(nsqip[,(column)]) == "character") {
+    nsqip[,(column)] <- as.factor(nsqip[,(column)])
+    print(class(nsqip[,(column)]))
+  }
+}
+str(nsqip)
+```
+
+```{r}
+#find percent NAs
+na_lst <- sapply(nsqip, function(x) sum(is.na(x)))
+na_lst
+percent_na <- lapply(na_lst, function(x) percent((x/nrow(nsqip))))
+percent_na
+
+```
+
+```{r}
+#implicit  NAs/ = '-99' list for each column
+implicit_lst <- sapply(nsqip, function(x) sum(x == -99))
+implicit_lst
+
+```
+
+```{r}
+#percent implicit for each column (made NAs, since they were null values in the beginning)
+implicit_lst[is.na(implicit_lst)] <- 0
+percent_implicit <- sapply(implicit_lst, function(x) percent(x/nrow(newdata)))
+percent_implicit
+
+#find all missing values
+missing_lst <- implicit_lst + na_lst
+missing_lst
+percent_missing <- lapply(missing_lst, function(x) percent((x/nrow(nsqip))))
+percent_missing
+```
+
+
+```{r}
+#NA bool mask
+
+# Remove all NAs to make no_NA dataframe
+
+#impute NAs in implicit list as 0, no implicit NAs in dataframe
+
+## could not do these steps because of NAs, might need to impute some
+```
+
+```{r}
+
+```
+
+
+```{r}
+#combine height and weight to make BMI
+nsqip$HEIGHT <- conv_unit(nsqip$HEIGHT, from = "inch", to= "m")
+nsqip$WEIGHT <- conv_unit(nsqip$WEIGHT,from ="lbs", to = "kg")
+
+nsqip <- mutate(nsqip, BMI = WEIGHT/HEIGHT^2)
+nsqip
+```
+
+
+```{r}
+# find percent within hematocrit thresholds 
+HCT1 <- nsqip %>% filter(PRHCT <= 24 & PRHCT >0)
+```
+
+```{r}
+HCT2 <- nsqip %>% filter(PRHCT <= 27 & PRHCT >24)
+HCT3 <- nsqip %>% filter(PRHCT <= 30 & PRHCT >27)
+HCT4 <- nsqip %>% filter(PRHCT <= 33 & PRHCT >30)
+HCT5 <- nsqip %>% filter(PRHCT <= 36 & PRHCT >33)
+HCT6 <- nsqip %>% filter(PRHCT <= 39 & PRHCT >36)
+HCT7 <- nsqip %>% filter(PRHCT >39)
+```
+
+```{r}
+# hematocrit stratification, number of patients in each
+dim(HCT1)
+dim(HCT2)
+dim(HCT3)
+dim(HCT4)
+dim(HCT5)
+dim(HCT6)
+dim(HCT7)
+```
+
+
+```{r}
+#filter patients for target range in preop values
+
+target_BUN <- nsqip %>% filter(PRBUN >= 5 & PRBUN <= 60)
+target_CREAT <- nsqip %>% filter(PRCREAT >= 0.02 & PRCREAT <= 15)
+target_PLT <- nsqip %>% filter(PRPLATE>= 50 & PRPLATE <= 700)
+target_PTT <- nsqip %>% filter(PRPTT >= 5 & PRPTT <= 25)
+target_INR <-nsqip %>% filter(PRINR >= 0.1 & PRINR <= 10)
+dim(target_BUN)
+dim(target_CREAT)
+dim(target_PLT)
+dim(target_PTT)
+dim(target_INR)
+
+
+```
+
+```{r}
+#number of patients within target range, for reference
+in_range <- nsqip %>% filter(PRCREAT >= 0.02 & PRCREAT <= 15, PRPLATE>= 50 & PRPLATE <= 700,PRPTT >= 5 & PRPTT <= 25,PRINR >= 0.1 & PRINR <= 10)
+dim(in_range)
+```
+
+```{r}
+# Look at days to MACE within 30 days for all patients
+ALLMACE_30 <- nsqip %>% filter(DOpertoD >0, DCNSCVA >0, DCDMI >0)
+ALLMACE_30
+CVA_30 <- nsqip %>% filter(DCNSCVA >0)
+dim(CVA_30)
+DEATH_30<- nsqip %>% filter(DOpertoD >0)
+dim(DEATH_30)
+MI_30 <-nsqip %>% filter(DCDMI >0)
+dim(MI_30)
+
+# Look at # of MACE occurences within 30 days for all patients
+
+```
+
