@@ -1,33 +1,40 @@
 ---
-title: "Untitled"
+title: "Exploratory Data Analysis for NSQIP"
 author: "Vidya Koesmahargyo"
 date: "11/8/2018"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Importing libraries
 ```{r, include=FALSE}
 library(dplyr)
 library(readr)
 library(data.table)
 library(measurements)
 library('scales')
+library(ggplot2)
 ```
 
+Importing Dataset (already selected columns)
 ```{r}
 newdata <- fread("NSQIP.csv", sep="auto")
 
 ```
 
+Dataset structure
 ```{r}
 nsqip <- newdata
 str(nsqip)
+
 ```
 
-
+Look at non-cardiac surgeries only.
 ```{r}
 #select out cardiac surgery
 nsqip <- filter(nsqip, SURGSPEC != "Cardiac Surgery")
@@ -35,7 +42,7 @@ colnames <- colnames(nsqip)
 
 ```
 
-
+Change thecharacter variables into factors for plotting/analysis purposes
 ```{r, include=FALSE}
 #factorize character variables
 for (column in colnames) {
@@ -47,6 +54,7 @@ for (column in colnames) {
 str(nsqip)
 ```
 
+Examine how much of the data set is missing, explicitlylt (NAs) or implicitly (-99).
 ```{r}
 #find percent NAs
 na_lst <- sapply(nsqip, function(x) sum(is.na(x)))
@@ -77,20 +85,7 @@ percent_missing
 ```
 
 
-```{r}
-#NA bool mask
-
-# Remove all NAs to make no_NA dataframe
-
-#impute NAs in implicit list as 0, no implicit NAs in dataframe
-
-## could not do these steps because of NAs, might need to impute some
-```
-
-```{r}
-
-```
-
+BMI is not available in dataset, mutate to combine height/weight
 
 ```{r}
 #combine height and weight to make BMI
@@ -103,7 +98,15 @@ summary(nsqip$BMI)
 
 
 ```{r}
-# find percent within hematocrit thresholds 
+#remove NAs in MACE
+nsqip$DEATH <- cut(nsqip$DOpertoD, c(-100,0,30))
+levels(nsqip$DEATH) <- c("Alive", "Within 30 Days")
+
+```
+
+Stratify accordnig to hematocrit
+```{r}
+# find percent within hematocrit thresholds (# of patients are columns)
 HCT1 <- nsqip %>% filter(PRHCT <= 24 & PRHCT >0)
 HCT2 <- nsqip %>% filter(PRHCT <= 27 & PRHCT >24)
 HCT3 <- nsqip %>% filter(PRHCT <= 30 & PRHCT >27)
@@ -144,7 +147,7 @@ dim(target_INR)
 ```
 
 ```{r}
-#number of patients within target range, for reference
+#number of patients within all target ranges, for reference
 in_range <- nsqip %>% filter(PRCREAT >= 0.02 & PRCREAT <= 15, PRPLATE>= 50 & PRPLATE <= 700,PRPTT >= 5 & PRPTT <= 25,PRINR >= 0.1 & PRINR <= 10)
 dim(in_range)
 ```
@@ -162,5 +165,37 @@ dim(MI_30)
 
 # Look at # of MACE occurences within 30 days for all patients
 
+```
+
+```{r}
+#NA bool mask
+
+# Remove all NAs to make no_NA dataframe
+
+#impute NAs in implicit list as 0, no implicit NAs in dataframe
+
+## could not do these steps because of NAs, might need to impute some
+```
+
+
+
+
+
+```{r}
+#for each obs, create new factor variable with either occurence of death, MI, or stroke.
+#plot occurence of MIin each HCT category
+nsqip$HCTcat<-cut(nsqip$PRHCT, c(0,24,27,30,33,36,39,300))
+levels(nsqip$HCTcat) <- c("<24", "24-27","27-30","30-33","33-36","36-39","39<")
+summary(nsqip$HCTcat)
+
+#plots on MACE
+ggplot(data = nsqip) + 
+  geom_bar(mapping = aes(x = HCTcat, fill= CDMI),position = "dodge")
+ggplot(data = nsqip) + 
+  geom_bar(mapping = aes(x = HCTcat, fill= CNSCVA),position = "dodge")
+ggplot(data = nsqip) + 
+  geom_bar(mapping = aes(x = HCTcat, fill= CDARREST),position = "dodge")
+ggplot(data = nsqip) + 
+  geom_bar(mapping = aes(x = HCTcat, fill= DEATH),position = "dodge")
 ```
 
